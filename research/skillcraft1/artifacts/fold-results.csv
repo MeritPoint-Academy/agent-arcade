@@ -1,0 +1,11 @@
+model,fold,accuracy,balanced_accuracy,roc_auc
+four_sensor,1,0.767305,0.767846,0.867965
+four_sensor,2,0.783505,0.784693,0.851816
+four_sensor,3,0.765832,0.762293,0.853811
+four_sensor,4,0.768778,0.77136,0.855119
+four_sensor,5,0.795287,0.793694,0.878063
+fifteen_sensor,1,0.790869,0.790737,0.892526
+fifteen_sensor,2,0.777614,0.779982,0.866482
+fifteen_sensor,3,0.807069,0.805294,0.883023
+fifteen_sensor,4,0.777614,0.779979,0.866574
+fifteen_sensor,5,0.789396,0.789336,0.885709

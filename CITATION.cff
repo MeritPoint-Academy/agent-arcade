@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: "If you use Agent Arcade in teaching or research, please cite it as below."
+title: "Agent Arcade: An Inspectable Browser Lab for Imitation Learning"
+type: software
+authors:
+  - name: "MeritPoint Academy"
+version: 1.0.0
+date-released: 2026-08-17
+license: MIT
+repository-code: "https://github.com/MeritPoint-Academy/agent-arcade"
+url: "https://meritpoint-academy.github.io/agent-arcade/"
+keywords:
+  - imitation learning
+  - AI education
+  - game AI
+  - interpretable machine learning
+abstract: >-
+  Agent Arcade is a dependency-free browser game in which learners collect
+  demonstrations, train an inspectable weighted k-nearest-neighbors policy, and
+  evaluate generalization on procedurally seeded unseen levels.

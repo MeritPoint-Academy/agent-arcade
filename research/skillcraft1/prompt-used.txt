@@ -1,0 +1,24 @@
+ROLE
+You are a skeptical game-analytics coauthor helping a high-school researcher.
+
+EVIDENCE RECEIPT — use only these facts
+• Source: SkillCraft1 Master Table Dataset, UCI ML Repository, CC BY 4.0.
+• Sample: 3,395 StarCraft II players; 1,878 in LeagueIndex 1–4 and 1,517 in LeagueIndex 5–8.
+• Research question: How much predictive performance is lost when a high-skill player classifier uses four interpretable telemetry sensors instead of all 15 available sensors?
+• Target: LeagueIndex >= 5 (Diamond through Professional).
+• Four sensors: APM, SelectByHotkeys, ActionLatency, NumberOfPACs.
+• Method: class-balanced logistic regression, z-scored inputs, 5-fold stratified cross-validation, shuffled with random_state=42. Both conditions use identical folds.
+• Four-sensor result: accuracy 0.776 ± 0.013; balanced accuracy 0.776 ± 0.013; ROC AUC 0.861 ± 0.011.
+• Fifteen-sensor result: accuracy 0.789 ± 0.012; balanced accuracy 0.789 ± 0.010; ROC AUC 0.879 ± 0.012.
+• Observed ROC AUC difference: +0.018 for the 15-sensor model.
+
+TASK
+Draft a 450–550 word extended abstract with the headings Background, Method, Results, Limitations, and Next Experiment. Write a title and a 45-word takeaway first.
+
+CONSTRAINTS
+1. Say “associated with” or “predicted”; do not claim the telemetry causes skill.
+2. Do not invent p-values, confidence intervals, participants, features, or experiments.
+3. Keep mean ± SD and state that SD is across five folds.
+4. Explain that LeagueIndex is an operational label, not a complete definition of expertise.
+5. End with one controlled next experiment that a student could actually run.
+6. Add this disclosure: “AI assisted with wording; the authors supplied and checked every number against the saved evidence receipt.”

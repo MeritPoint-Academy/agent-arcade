@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#071426">
+  <meta name="description" content="Teach an inspectable AI agent by playing a browser game, then test it on unseen levels.">
+  <title>Agent Arcade · Teach the Bot, Test the Bot, Break the Bot</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="src/environment.js"></script>
+  <script defer src="src/policy.js"></script>
+  <script defer src="src/experiment.js"></script>
+  <script defer src="src/app.js"></script>
+</head>
+<body>
+  <a class="skip" href="#game">Skip to game</a>
+  <main class="shell">
+    <header class="top">
+      <div class="brand">
+        <div class="mark" aria-hidden="true">A</div>
+        <div>
+          <div class="eyebrow">MeritPoint Academy · Open Learning Lab</div>
+          <h1>Agent Arcade <span>/</span> Teach it. Test it. Break it.</h1>
+        </div>
+      </div>
+      <nav class="top-links" aria-label="Project links">
+        <a href="https://github.com/MeritPoint-Academy/agent-arcade">View source</a>
+        <a href="https://github.com/MeritPoint-Academy/agent-arcade/blob/main/docs/teaching-guide.md">Teaching guide</a>
+      </nav>
+    </header>
+
+    <section class="privacy">
+      <b>Local-only lab.</b> Your gameplay rows stay in this browser unless you choose
+      <b>Export CSV</b>. There is no account, camera, microphone, analytics, or commercial-game connection.
+    </section>
+
+    <section class="hud" aria-label="Game statistics">
+      <div class="stat"><span>Mode</span><b class="cyan" id="hudMode">HUMAN</b></div>
+      <div class="stat"><span>Score</span><b class="amber" id="hudScore">0</b></div>
+      <div class="stat"><span>Lives</span><b id="hudLives">♥ ♥ ♥</b></div>
+      <div class="stat"><span>Level seed</span><b id="hudSeed">21</b></div>
+      <div class="stat"><span>Your examples</span><b class="green" id="hudRows">0</b></div>
+    </section>
+
+    <section class="workspace">
+      <article class="gamecard">
+        <div class="gamebar">
+          <div class="lights" aria-hidden="true"><i></i></div>
+          <div class="mode" id="modeLabel">PLAYER RUN · COLLECT DEMONSTRATIONS</div>
+          <div class="hint">← → or A D · collect C · avoid ▲</div>
+        </div>
+        <canvas id="game" width="960" height="540" aria-label="Three-lane arcade game"></canvas>
+        <div class="touch">
+          <button id="touchLeft" type="button">◀ LEFT</button>
+          <button id="touchRight" type="button">RIGHT ▶</button>
+        </div>
+        <div class="controls">
+          <button id="humanBtn" class="primary" type="button">① Player Run</button>
+          <button id="trainBtn" type="button">② Train My Agent</button>
+          <button id="agentBtn" class="hot" type="button">③ AI Takeover</button>
+          <button id="unseenBtn" type="button">④ Unseen Level</button>
+          <button id="exportBtn" type="button">↓ Export CSV</button>
+          <button id="resetBtn" type="button">↺ Reset My Data</button>
+        </div>
+        <div class="statusline" id="statusLine" aria-live="polite">
+          <b>Mission:</b> play for 30 seconds. Every decision becomes one state → action training row.
+        </div>
+      </article>
+
+      <aside class="right">
+        <section class="panel">
+          <h2>AI Brain · live policy</h2>
+          <div class="decision">
+            <div class="arrow" id="decisionArrow" aria-hidden="true">·</div>
+            <div><b id="decisionName">Watching you</b><span id="decisionWhy">Collect demonstrations first.</span></div>
+          </div>
+          <div class="prob"><span>LEFT</span><div class="track"><div class="fill" id="pLeft"></div></div><output id="vLeft">—</output></div>
+          <div class="prob"><span>STAY</span><div class="track"><div class="fill" id="pStay"></div></div><output id="vStay">—</output></div>
+          <div class="prob"><span>RIGHT</span><div class="track"><div class="fill" id="pRight"></div></div><output id="vRight">—</output></div>
+          <div class="sensor-grid">
+            <div class="sensor"><span>Obstacle Δ lane</span><b id="sObsDx">—</b></div>
+            <div class="sensor"><span>Obstacle distance</span><b id="sObsD">—</b></div>
+            <div class="sensor"><span>Coin Δ lane</span><b id="sCoinDx">—</b></div>
+            <div class="sensor"><span>Coin distance</span><b id="sCoinD">—</b></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>Training receipt</h2>
+          <div class="dataset"><span>Starter demonstrations</span><b id="starterN">180</b></div>
+          <div class="dataset"><span>Your demonstrations</span><b id="yourN">0</b></div>
+          <div class="dataset"><span>Policy</span><b>weighted k-NN · k=9</b></div>
+          <div class="dataset"><span>Inputs</span><b>4 sensors</b></div>
+          <div class="receipt" id="trainReceipt">
+            Press <b>Train My Agent</b>. The model will compare the current sensor vector with nearby examples and vote on the next action.
+          </div>
+        </section>
+      </aside>
+
+      <section class="research" id="research">
+        <article class="panel question">
+          <h2>Research question · fixed data budget</h2>
+          <p>With the <strong>same 240 demonstration rows</strong>, does training on more level seeds improve action accuracy on unseen levels?</p>
+          <p class="small">Independent variable: 1 seed vs 12 seeds · Controls: same rows, features, model and test seeds · Outcome: held-out action accuracy.</p>
+          <div class="links">
+            Research backing:
+            <a href="https://proceedings.mlr.press/v119/cobbe20a.html">Procgen benchmark</a> ·
+            <a href="https://github.com/GAIGResearch/GVGAI">GVGAI</a>
+          </div>
+        </article>
+        <article class="panel experiment">
+          <div class="exp-head">
+            <h2>Generalization test</h2>
+            <button class="action" id="experimentBtn" type="button">▶ Run fair test</button>
+          </div>
+          <div class="bars">
+            <label>1 seed</label><div class="bar one"><i id="barOne"></i></div><output id="outOne">—</output>
+            <label>12 seeds</label><div class="bar many"><i id="barMany"></i></div><output id="outMany">—</output>
+          </div>
+          <div class="receipt" id="experimentReceipt" aria-live="polite">
+            Both agents receive exactly 240 labeled actions. The test set uses 20 level seeds that neither agent has seen.
+          </div>
+        </article>
+      </section>
+    </section>
+
+    <section class="learn">
+      <div>
+        <div class="eyebrow">Coding-level teaching</div>
+        <h2>The agent is small enough to understand.</h2>
+        <p>Each game state becomes four numbers. The policy finds nine nearby human demonstrations, gives closer examples more voting power, and selects LEFT, STAY, or RIGHT.</p>
+      </div>
+      <pre><code>function predict(state, rows, k = 9) {
+  const x = vector(state);
+  const near = closest(rows, x).slice(0, k);
+  const vote = weightedVote(near);
+  return highestVote(vote);
+}</code></pre>
+      <a class="source-button" href="src/policy.js">Read the real policy code →</a>
+    </section>
+
+    <footer>
+      <p>Built for learning and research—not for bypassing protections in commercial games.</p>
+      <p><a href="LICENSE">Code: MIT</a> · <a href="LICENSE-CONTENT.md">Learning materials: CC BY 4.0</a> · <a href="CITATION.cff">How to cite</a></p>
+    </footer>
+  </main>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

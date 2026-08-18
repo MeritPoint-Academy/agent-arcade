@@ -1,0 +1,22 @@
+{
+  "name": "@meritpoint-academy/agent-arcade",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A dependency-free browser game for teaching imitation learning and AI research design.",
+  "scripts": {
+    "serve": "python3 -m http.server 8000",
+    "test": "node --test tests/*.test.js"
+  },
+  "keywords": [
+    "ai-education",
+    "imitation-learning",
+    "knn",
+    "game-ai",
+    "browser-game"
+  ],
+  "author": "MeritPoint Academy",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  }
+}

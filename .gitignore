@@ -1,0 +1,7 @@
+.DS_Store
+node_modules/
+__pycache__/
+.venv/
+research/skillcraft1/raw/
+research/skillcraft1/output/
+*.csv~

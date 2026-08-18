@@ -1,0 +1,140 @@
+{
+  "source": {
+    "name": "SkillCraft1 Master Table Dataset",
+    "creators": "Blair, Thompson, Henrey, and Chen (2013)",
+    "url": "https://archive.ics.uci.edu/static/public/272/skillcraft1+master+table+dataset.zip",
+    "doi": "https://doi.org/10.24432/C5161N",
+    "license": "CC BY 4.0",
+    "download_sha256": "d6f4f88c2d077a0938cf774ff242df511c9a5801dcc66e4461ffdf893ce23fc2"
+  },
+  "research_question": "How much predictive performance is lost when a high-skill player classifier uses four interpretable telemetry sensors instead of all 15 available sensors?",
+  "target": "LeagueIndex >= 5 (Diamond through Professional)",
+  "n_rows": 3395,
+  "class_counts": {
+    "lower_skill_1_to_4": 1878,
+    "high_skill_5_to_8": 1517
+  },
+  "method": "Class-balanced logistic regression with z-scored features; five-fold stratified cross-validation with shuffle=True and random_state=42.",
+  "models": {
+    "four_sensor": {
+      "features": [
+        "APM",
+        "SelectByHotkeys",
+        "ActionLatency",
+        "NumberOfPACs"
+      ],
+      "folds": [
+        {
+          "fold": 1,
+          "accuracy": 0.767305,
+          "balanced_accuracy": 0.767846,
+          "roc_auc": 0.867965
+        },
+        {
+          "fold": 2,
+          "accuracy": 0.783505,
+          "balanced_accuracy": 0.784693,
+          "roc_auc": 0.851816
+        },
+        {
+          "fold": 3,
+          "accuracy": 0.765832,
+          "balanced_accuracy": 0.762293,
+          "roc_auc": 0.853811
+        },
+        {
+          "fold": 4,
+          "accuracy": 0.768778,
+          "balanced_accuracy": 0.77136,
+          "roc_auc": 0.855119
+        },
+        {
+          "fold": 5,
+          "accuracy": 0.795287,
+          "balanced_accuracy": 0.793694,
+          "roc_auc": 0.878063
+        }
+      ],
+      "summary": {
+        "accuracy": {
+          "mean": 0.776141,
+          "sd": 0.012839
+        },
+        "balanced_accuracy": {
+          "mean": 0.775977,
+          "sd": 0.012889
+        },
+        "roc_auc": {
+          "mean": 0.861355,
+          "sd": 0.011288
+        }
+      }
+    },
+    "fifteen_sensor": {
+      "features": [
+        "APM",
+        "SelectByHotkeys",
+        "AssignToHotkeys",
+        "UniqueHotkeys",
+        "MinimapAttacks",
+        "MinimapRightClicks",
+        "NumberOfPACs",
+        "GapBetweenPACs",
+        "ActionLatency",
+        "ActionsInPAC",
+        "TotalMapExplored",
+        "WorkersMade",
+        "UniqueUnitsMade",
+        "ComplexUnitsMade",
+        "ComplexAbilitiesUsed"
+      ],
+      "folds": [
+        {
+          "fold": 1,
+          "accuracy": 0.790869,
+          "balanced_accuracy": 0.790737,
+          "roc_auc": 0.892526
+        },
+        {
+          "fold": 2,
+          "accuracy": 0.777614,
+          "balanced_accuracy": 0.779982,
+          "roc_auc": 0.866482
+        },
+        {
+          "fold": 3,
+          "accuracy": 0.807069,
+          "balanced_accuracy": 0.805294,
+          "roc_auc": 0.883023
+        },
+        {
+          "fold": 4,
+          "accuracy": 0.777614,
+          "balanced_accuracy": 0.779979,
+          "roc_auc": 0.866574
+        },
+        {
+          "fold": 5,
+          "accuracy": 0.789396,
+          "balanced_accuracy": 0.789336,
+          "roc_auc": 0.885709
+        }
+      ],
+      "summary": {
+        "accuracy": {
+          "mean": 0.788513,
+          "sd": 0.012127
+        },
+        "balanced_accuracy": {
+          "mean": 0.789066,
+          "sd": 0.010384
+        },
+        "roc_auc": {
+          "mean": 0.878863,
+          "sd": 0.011781
+        }
+      }
+    }
+  },
+  "observed_delta_roc_auc": 0.017508
+}
