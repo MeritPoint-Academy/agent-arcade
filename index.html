@@ -48,7 +48,7 @@
         <div class="gamebar">
           <div class="lights" aria-hidden="true"><i></i></div>
           <div class="mode" id="modeLabel">PLAYER RUN · COLLECT DEMONSTRATIONS</div>
-          <div class="hint">← → or A D · collect C · avoid ▲</div>
+          <div class="hint">← → or A D · Space/P pause · collect C · avoid ▲</div>
         </div>
         <canvas id="game" width="960" height="540" aria-label="Three-lane arcade game"></canvas>
         <div class="touch">
@@ -57,6 +57,7 @@
         </div>
         <div class="controls">
           <button id="humanBtn" class="primary" type="button">① Player Run</button>
+          <button id="pauseBtn" type="button" aria-pressed="false" aria-keyshortcuts="Space P">⏸ Pause Run</button>
           <button id="trainBtn" type="button">② Train My Agent</button>
           <button id="agentBtn" class="hot" type="button">③ AI Takeover</button>
           <button id="unseenBtn" type="button">④ Unseen Level</button>

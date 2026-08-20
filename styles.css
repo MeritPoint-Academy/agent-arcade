@@ -60,6 +60,8 @@ canvas { display: block; width: 100%; aspect-ratio: 16/9; background: #061321; t
 .controls button:hover, .action:hover { transform: translateY(-1px); border-color: var(--cyan); }
 .controls .primary { background: linear-gradient(135deg, #0f9db0, #087685); border-color: #32d4e1; }
 .controls .hot { background: linear-gradient(135deg, #e44072, #a42658); border-color: #ff7ca4; }
+.controls .paused { background: #5d4711; border-color: var(--amber); color: #fff3bd; }
+canvas.is-paused { cursor: default; }
 button:disabled { opacity: .45; cursor: not-allowed; transform: none; }
 .statusline { padding: 8px 13px; color: var(--muted); font-size: 12px; border-top: 1px solid #173550; }
 .statusline b { color: var(--white); }

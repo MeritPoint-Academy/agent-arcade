@@ -18,6 +18,8 @@ weighted k-NN Agent。Agent 接管后，学生可以查看四个传感器、动�
 1. **Play:** use ← / → or A / D to collect coins and avoid hazards.
 2. **Collect data:** every decision becomes a four-sensor input plus an action label.
 3. **Train:** combine balanced starter demonstrations with the student's own examples.
+   Pause at any time with the on-screen control, <kbd>Space</kbd>, or <kbd>P</kbd>;
+   the simulation and demonstration collection freeze together.
 4. **Inspect:** watch sensor values, neighbor-weighted votes, actions, and rewards.
 5. **Generalize:** compare one-seed and twelve-seed policies under the same 240-row budget.
 6. **Extend:** change sensors, `k`, reward rules, level distributions, or the model itself.

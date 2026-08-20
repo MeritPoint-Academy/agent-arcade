@@ -14,6 +14,7 @@
   let seed = 21;
   let world = A.makeWorld(seed);
   let queuedAction = A.ACTION.STAY;
+  let paused = false;
 
   $("starterN").textContent = starterRows.length;
 
@@ -40,8 +41,30 @@
     updateHud();
   }
 
+  function modeStatus() {
+    return mode === "human"
+      ? "<b>Mission:</b> play for 30 seconds. Every decision becomes one state → action training row."
+      : "<b>Observe:</b> watch the sensor rays, action probabilities, reward, and failure cases. The bot sees numbers—not pixels.";
+  }
+
+  function setPaused(nextPaused, announce = true) {
+    if (paused === nextPaused) return;
+    paused = nextPaused;
+    queuedAction = A.ACTION.STAY;
+    const button = $("pauseBtn");
+    button.textContent = paused ? "▶ Resume Run" : "⏸ Pause Run";
+    button.setAttribute("aria-pressed", String(paused));
+    button.classList.toggle("paused", paused);
+    canvas.classList.toggle("is-paused", paused);
+    $("statusLine").innerHTML = paused
+      ? "<b>Paused:</b> the game and example collection are frozen. Resume when you are ready."
+      : modeStatus();
+    if (announce) toast(paused ? "Run paused · examples are not being collected" : "Run resumed");
+  }
+
   function setMode(nextMode, nextSeed = seed) {
     mode = nextMode;
+    setPaused(false, false);
     resetWorld(nextSeed);
     const human = mode === "human";
     $("hudMode").textContent = human ? "HUMAN" : mode === "agent" ? "AGENT" : "UNSEEN";
@@ -50,9 +73,7 @@
       : mode === "agent"
         ? "AI TAKEOVER · WATCH THE POLICY"
         : "UNSEEN LEVEL · GENERALIZATION CHECK";
-    $("statusLine").innerHTML = human
-      ? "<b>Mission:</b> play for 30 seconds. Every decision becomes one state → action training row."
-      : "<b>Observe:</b> watch the sensor rays, action probabilities, reward, and failure cases. The bot sees numbers—not pixels.";
+    $("statusLine").innerHTML = modeStatus();
   }
 
   function trainMine() {
@@ -74,6 +95,12 @@
   }
 
   document.addEventListener("keydown", (event) => {
+    const interactive = event.target.closest?.("button, a, input, select, textarea");
+    if (!interactive && [" ", "p", "P"].includes(event.key) && !event.repeat) {
+      event.preventDefault();
+      setPaused(!paused);
+      return;
+    }
     if (["ArrowLeft", "a", "A"].includes(event.key)) {
       event.preventDefault();
       queueAction(A.ACTION.LEFT);
@@ -83,6 +110,7 @@
       queueAction(A.ACTION.RIGHT);
     }
   });
+  $("pauseBtn").addEventListener("click", () => setPaused(!paused));
   $("touchLeft").addEventListener("pointerdown", () => queueAction(A.ACTION.LEFT));
   $("touchRight").addEventListener("pointerdown", () => queueAction(A.ACTION.RIGHT));
   canvas.addEventListener("pointerdown", (event) => {
@@ -107,6 +135,9 @@
     $("trainReceipt").innerHTML = "Press <b>Train My Agent</b>. The model will compare the current sensor vector with nearby examples and vote on the next action.";
     updateHud();
     toast("Your local demonstrations were cleared");
+  });
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden && !paused) setPaused(true, false);
   });
   $("exportBtn").addEventListener("click", () => {
     if (!userRows.length) {
@@ -184,6 +215,7 @@
   }
 
   function tick() {
+    if (paused) return;
     if (world.done) {
       resetWorld(world.seed + 1);
       return;
@@ -357,6 +389,17 @@
     context.fillText(mode === "human" ? "YOU ARE THE LABELER" : "POLICY IS DRIVING", 24, 32);
     context.fillStyle = world.lastReward < 0 ? "#ff5f8f" : world.lastReward > 1 ? "#ffc857" : "#55e6a5";
     context.fillText(`reward ${world.lastReward.toFixed(2)}`, 24, 54);
+    if (paused) {
+      context.fillStyle = "rgba(3, 10, 18, 0.72)";
+      context.fillRect(0, 0, width, height);
+      context.fillStyle = "#ffffff";
+      context.font = "900 38px ui-monospace";
+      context.textAlign = "center";
+      context.fillText("PAUSED", center, height / 2 - 8);
+      context.fillStyle = "#9cb7ca";
+      context.font = "700 17px ui-monospace";
+      context.fillText("No examples are being collected", center, height / 2 + 28);
+    }
     requestAnimationFrame(draw);
   }
 
