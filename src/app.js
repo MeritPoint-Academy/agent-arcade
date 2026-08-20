@@ -1,8 +1,55 @@
-/* Browser UI and animation. Core AI logic lives in policy.js. */
-(function startAgentArcade() {
+/* Browser UI, animation, and local-only run history. Core AI logic lives in policy.js. */
+(function startAgentArcade(root) {
   "use strict";
 
-  const A = window.AgentArcade;
+  const RUN_KEYS = Object.freeze(["human", "agent", "unseenHuman", "unseenAgent"]);
+  const RUN_STATS_KEY = "agent-arcade-run-stats-v1";
+
+  function emptyRunStats() {
+    return Object.fromEntries(RUN_KEYS.map((key) => [key, { runs: 0, best: null, total: 0 }]));
+  }
+
+  function normalizeRunStats(value) {
+    const normalized = emptyRunStats();
+    for (const key of RUN_KEYS) {
+      const candidate = value && value[key];
+      if (!candidate || !Number.isInteger(candidate.runs) || candidate.runs < 0) continue;
+      const total = Number(candidate.total);
+      const best = candidate.best == null ? null : Number(candidate.best);
+      if (!Number.isFinite(total) || total < 0 || (candidate.runs > 0 && !Number.isFinite(best))) continue;
+      normalized[key] = candidate.runs === 0
+        ? { runs: 0, best: null, total: 0 }
+        : { runs: candidate.runs, best, total };
+    }
+    return normalized;
+  }
+
+  function recordRun(stats, key, score) {
+    if (!RUN_KEYS.includes(key)) throw new Error(`Unknown run-stat key: ${key}`);
+    if (!Number.isFinite(score) || score < 0) throw new Error("Run score must be a non-negative number");
+    const next = normalizeRunStats(stats);
+    const current = next[key];
+    next[key] = {
+      runs: current.runs + 1,
+      best: current.best == null ? score : Math.max(current.best, score),
+      total: current.total + score,
+    };
+    return next;
+  }
+
+  function unseenSeedFor(stats, key, seeds) {
+    if (!["unseenHuman", "unseenAgent"].includes(key)) throw new Error("Unseen seed requires an unseen mode");
+    if (!Array.isArray(seeds) || !seeds.length) throw new Error("At least one held-out seed is required");
+    const completed = normalizeRunStats(stats)[key].runs;
+    return seeds[completed % seeds.length] + Math.floor(completed / seeds.length) * 1000;
+  }
+
+  const statsApi = { RUN_KEYS, emptyRunStats, normalizeRunStats, recordRun, unseenSeedFor };
+  if (typeof module !== "undefined" && module.exports) module.exports = statsApi;
+  if (!root || !root.document) return;
+
+  const A = root.AgentArcade;
+  const document = root.document;
   const $ = (id) => document.getElementById(id);
   const canvas = $("game");
   const context = canvas.getContext("2d");
@@ -15,6 +62,7 @@
   let world = A.makeWorld(seed);
   let queuedAction = A.ACTION.STAY;
   let paused = false;
+  let runStats = loadRunStats();
 
   $("starterN").textContent = starterRows.length;
 
@@ -24,6 +72,63 @@
     element.classList.add("on");
     clearTimeout(element.dismissTimer);
     element.dismissTimer = setTimeout(() => element.classList.remove("on"), 2200);
+  }
+
+  function loadRunStats() {
+    try {
+      return normalizeRunStats(JSON.parse(root.localStorage.getItem(RUN_STATS_KEY)));
+    } catch {
+      return emptyRunStats();
+    }
+  }
+
+  function saveRunStats() {
+    try { root.localStorage.setItem(RUN_STATS_KEY, JSON.stringify(runStats)); } catch {}
+  }
+
+  function formatScore(value) {
+    return value == null ? "—" : value.toFixed(1);
+  }
+
+  function renderRunStats() {
+    const ids = {
+      human: "human",
+      agent: "agent",
+      unseenHuman: "unseenHuman",
+      unseenAgent: "unseenAgent",
+    };
+    for (const [key, prefix] of Object.entries(ids)) {
+      const result = runStats[key];
+      $(`${prefix}Runs`).textContent = result.runs;
+      $(`${prefix}Best`).textContent = formatScore(result.best);
+      $(`${prefix}Avg`).textContent = result.runs ? formatScore(result.total / result.runs) : "—";
+    }
+    const bestOf = (keys) => {
+      const values = keys.map((key) => runStats[key].best).filter((value) => value != null);
+      return values.length ? Math.max(...values) : null;
+    };
+    const unseenRuns = runStats.unseenHuman.runs + runStats.unseenAgent.runs;
+    $("scoreSummary").textContent = `Overall best · Human ${formatScore(bestOf(["human", "unseenHuman"]))} · AI ${formatScore(bestOf(["agent", "unseenAgent"]))} · Unseen completed ${unseenRuns}`;
+  }
+
+  function isHumanMode(value = mode) {
+    return value === "human" || value === "unseen-human";
+  }
+
+  function isUnseenMode(value = mode) {
+    return value === "unseen-human" || value === "unseen-agent";
+  }
+
+  function statKeyForMode(value = mode) {
+    return { human: "human", agent: "agent", "unseen-human": "unseenHuman", "unseen-agent": "unseenAgent" }[value];
+  }
+
+  function recordCompletedRun() {
+    const score = world.score;
+    runStats = recordRun(runStats, statKeyForMode(), score);
+    saveRunStats();
+    renderRunStats();
+    toast(`Completed run saved locally · score ${formatScore(score)}`);
   }
 
   function updateHud() {
@@ -42,9 +147,10 @@
   }
 
   function modeStatus() {
-    return mode === "human"
-      ? "<b>Mission:</b> play for 30 seconds. Every decision becomes one state → action training row."
-      : "<b>Observe:</b> watch the sensor rays, action probabilities, reward, and failure cases. The bot sees numbers—not pixels.";
+    if (mode === "human") return "<b>Mission:</b> play for 30 seconds. Every decision becomes one state → action training row.";
+    if (mode === "unseen-human") return "<b>Human unseen test:</b> you control a held-out level. These actions are evaluation only and never enter training.";
+    if (mode === "unseen-agent") return "<b>AI unseen test:</b> the policy controls the same held-out seed sequence used by Human · Unseen.";
+    return "<b>Observe:</b> watch the sensor rays, action probabilities, reward, and failure cases. The bot sees numbers—not pixels.";
   }
 
   function setPaused(nextPaused, announce = true) {
@@ -57,7 +163,7 @@
     button.classList.toggle("paused", paused);
     canvas.classList.toggle("is-paused", paused);
     $("statusLine").innerHTML = paused
-      ? "<b>Paused:</b> the game and example collection are frozen. Resume when you are ready."
+      ? "<b>Paused:</b> the current run is frozen. Resume when you are ready."
       : modeStatus();
     if (announce) toast(paused ? "Run paused · examples are not being collected" : "Run resumed");
   }
@@ -66,13 +172,19 @@
     mode = nextMode;
     setPaused(false, false);
     resetWorld(nextSeed);
-    const human = mode === "human";
-    $("hudMode").textContent = human ? "HUMAN" : mode === "agent" ? "AGENT" : "UNSEEN";
-    $("modeLabel").textContent = human
-      ? "PLAYER RUN · COLLECT DEMONSTRATIONS"
-      : mode === "agent"
-        ? "AI TAKEOVER · WATCH THE POLICY"
-        : "UNSEEN LEVEL · GENERALIZATION CHECK";
+    const labels = {
+      human: ["HUMAN", "PLAYER RUN · COLLECT DEMONSTRATIONS"],
+      agent: ["AGENT", "AI TAKEOVER · WATCH THE POLICY"],
+      "unseen-human": ["HUMAN TEST", "HUMAN · UNSEEN LEVEL · NO TRAINING ROWS"],
+      "unseen-agent": ["AI TEST", "AI · UNSEEN LEVEL · GENERALIZATION CHECK"],
+    };
+    $("hudMode").textContent = labels[mode][0];
+    $("modeLabel").textContent = labels[mode][1];
+    document.querySelectorAll(".controls [data-mode]").forEach((button) => {
+      const active = button.dataset.mode === mode;
+      button.classList.toggle("is-active", active);
+      button.setAttribute("aria-pressed", String(active));
+    });
     $("statusLine").innerHTML = modeStatus();
   }
 
@@ -91,7 +203,7 @@
   }
 
   function queueAction(action) {
-    if (mode === "human") queuedAction = action;
+    if (isHumanMode()) queuedAction = action;
   }
 
   document.addEventListener("keydown", (event) => {
@@ -124,9 +236,12 @@
     if (!model) trainMine();
     setMode("agent", 301);
   });
-  $("unseenBtn").addEventListener("click", () => {
+  $("unseenAiBtn").addEventListener("click", () => {
     if (!model) trainMine();
-    setMode("unseen", 900 + (Date.now() % 500 | 0));
+    setMode("unseen-agent", unseenSeedFor(runStats, "unseenAgent", A.TEST_SEEDS));
+  });
+  $("unseenHumanBtn").addEventListener("click", () => {
+    setMode("unseen-human", unseenSeedFor(runStats, "unseenHuman", A.TEST_SEEDS));
   });
   $("resetBtn").addEventListener("click", () => {
     userRows = [];
@@ -134,7 +249,14 @@
     setMode("human", 21);
     $("trainReceipt").innerHTML = "Press <b>Train My Agent</b>. The model will compare the current sensor vector with nearby examples and vote on the next action.";
     updateHud();
-    toast("Your local demonstrations were cleared");
+    toast("Your demonstrations were cleared · score history was kept");
+  });
+  $("clearStatsBtn").addEventListener("click", () => {
+    if (!root.confirm("Clear all locally saved run counts and scores?")) return;
+    runStats = emptyRunStats();
+    saveRunStats();
+    renderRunStats();
+    toast("Local score history cleared");
   });
   document.addEventListener("visibilitychange", () => {
     if (document.hidden && !paused) setPaused(true, false);
@@ -163,7 +285,7 @@
   $("experimentBtn").addEventListener("click", () => {
     const button = $("experimentBtn");
     button.disabled = true;
-    button.textContent = "Computing…";
+    button.textContent = "Computing fixed test…";
     setTimeout(() => {
       const result = A.runGeneralizationExperiment();
       const one = result.oneSeedAccuracy * 100;
@@ -174,9 +296,9 @@
       $("outMany").textContent = `${many.toFixed(1)}%`;
       const delta = many - one;
       const direction = delta >= 0 ? "higher" : "lower";
-      $("experimentReceipt").innerHTML = `<b>Computed, not prewritten:</b> with the same 240 rows, the 12-seed policy was ${Math.abs(delta).toFixed(1)} percentage points ${direction} on 600 held-out actions. Mean game score: ${result.oneSeedScore.toFixed(1)} vs ${result.manySeedScore.toFixed(1)}. Repeat before making a broad claim.`;
+      $("experimentReceipt").innerHTML = `<b>Computed now from fixed seeds—not a stored percentage.</b> With the same 240 rows, the 12-seed policy was ${Math.abs(delta).toFixed(1)} percentage points ${direction} on 600 held-out actions. Mean game score: ${result.oneSeedScore.toFixed(1)} vs ${result.manySeedScore.toFixed(1)}. Same inputs produce the same result; live Unseen play is separate.`;
       button.disabled = false;
-      button.textContent = "↻ Run again";
+      button.textContent = "↻ Recompute same test";
       document.body.dataset.experimentComplete = "true";
       toast("Unseen-level test complete");
     }, 80);
@@ -190,8 +312,10 @@
 
     if (!prediction) {
       $("decisionArrow").textContent = "·";
-      $("decisionName").textContent = "Watching you";
-      $("decisionWhy").textContent = "Your key press becomes the label.";
+      $("decisionName").textContent = mode === "unseen-human" ? "Human controls" : "Watching you";
+      $("decisionWhy").textContent = mode === "unseen-human"
+        ? "Held-out evaluation · not a training label"
+        : "Your key press becomes the label.";
       [["pLeft", "vLeft"], ["pStay", "vStay"], ["pRight", "vRight"]].forEach(([bar, value]) => {
         $(bar).style.width = "0%";
         $(value).textContent = "—";
@@ -217,14 +341,18 @@
   function tick() {
     if (paused) return;
     if (world.done) {
-      resetWorld(world.seed + 1);
+      recordCompletedRun();
+      const nextSeed = isUnseenMode()
+        ? unseenSeedFor(runStats, statKeyForMode(), A.TEST_SEEDS)
+        : world.seed + 1;
+      resetWorld(nextSeed);
       return;
     }
 
     const state = A.stateOf(world);
     let action = A.ACTION.STAY;
     let prediction = null;
-    if (mode === "human") {
+    if (isHumanMode()) {
       action = queuedAction;
       queuedAction = A.ACTION.STAY;
     } else {
@@ -307,7 +435,7 @@
 
     const playerY = height * 0.86;
     const playerX = laneX(world.lane, 0.86, center, topWidth, bottomWidth);
-    if (mode !== "human") {
+    if (!isHumanMode()) {
       const ahead = world.entities.filter((entity) => !entity.hit && entity.y < 0.91).sort((a, b) => b.y - a.y);
       const coin = ahead.find((entity) => entity.type === "coin");
       const obstacle = ahead.find((entity) => entity.type === "hazard");
@@ -368,7 +496,7 @@
 
     context.save();
     context.translate(playerX, playerY);
-    context.shadowColor = mode === "human" ? "#55e6a5" : "#38e5ef";
+    context.shadowColor = isHumanMode() ? "#55e6a5" : "#38e5ef";
     context.shadowBlur = 26;
     context.fillStyle = context.shadowColor;
     context.beginPath();
@@ -386,7 +514,13 @@
     context.fillStyle = "#9cb7ca";
     context.font = "700 14px ui-monospace";
     context.textAlign = "left";
-    context.fillText(mode === "human" ? "YOU ARE THE LABELER" : "POLICY IS DRIVING", 24, 32);
+    const canvasMode = {
+      human: "YOU ARE THE LABELER",
+      agent: "POLICY IS DRIVING",
+      "unseen-human": "HUMAN · HELD-OUT LEVEL",
+      "unseen-agent": "AI · HELD-OUT LEVEL",
+    };
+    context.fillText(canvasMode[mode], 24, 32);
     context.fillStyle = world.lastReward < 0 ? "#ff5f8f" : world.lastReward > 1 ? "#ffc857" : "#55e6a5";
     context.fillText(`reward ${world.lastReward.toFixed(2)}`, 24, 54);
     if (paused) {
@@ -403,7 +537,8 @@
     requestAnimationFrame(draw);
   }
 
+  renderRunStats();
   setMode("human", 21);
   setInterval(tick, 100);
   requestAnimationFrame(draw);
-})();
+})(typeof window !== "undefined" ? window : null);
