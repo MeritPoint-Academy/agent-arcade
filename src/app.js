@@ -285,7 +285,7 @@
   $("experimentBtn").addEventListener("click", () => {
     const button = $("experimentBtn");
     button.disabled = true;
-    button.textContent = "Computing…";
+    button.textContent = "Computing fixed test…";
     setTimeout(() => {
       const result = A.runGeneralizationExperiment();
       const one = result.oneSeedAccuracy * 100;
@@ -296,9 +296,9 @@
       $("outMany").textContent = `${many.toFixed(1)}%`;
       const delta = many - one;
       const direction = delta >= 0 ? "higher" : "lower";
-      $("experimentReceipt").innerHTML = `<b>Computed, not prewritten:</b> with the same 240 rows, the 12-seed policy was ${Math.abs(delta).toFixed(1)} percentage points ${direction} on 600 held-out actions. Mean game score: ${result.oneSeedScore.toFixed(1)} vs ${result.manySeedScore.toFixed(1)}. Repeat before making a broad claim.`;
+      $("experimentReceipt").innerHTML = `<b>Computed now from fixed seeds—not a stored percentage.</b> With the same 240 rows, the 12-seed policy was ${Math.abs(delta).toFixed(1)} percentage points ${direction} on 600 held-out actions. Mean game score: ${result.oneSeedScore.toFixed(1)} vs ${result.manySeedScore.toFixed(1)}. Same inputs produce the same result; live Unseen play is separate.`;
       button.disabled = false;
-      button.textContent = "↻ Run again";
+      button.textContent = "↻ Recompute same test";
       document.body.dataset.experimentComplete = "true";
       toast("Unseen-level test complete");
     }, 80);

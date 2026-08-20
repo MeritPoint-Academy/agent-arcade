@@ -110,6 +110,9 @@ button:disabled { opacity: .45; cursor: not-allowed; transform: none; }
 .exp-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .exp-head h2 { margin: 0; }
 .action { min-height: 36px; padding: 6px 11px; background: #7e5412; border-color: var(--amber); }
+.exp-method { display: grid; gap: 3px; margin-top: 9px; padding: 8px 9px; border: 1px solid #20445f; border-radius: 8px; background: #091a2c; color: var(--muted); font-size: 10px; line-height: 1.35; }
+.exp-method b { color: var(--amber); font: 850 10px/1.2 ui-monospace, monospace; letter-spacing: .06em; text-transform: uppercase; }
+.exp-method strong { color: var(--white); }
 .bars { display: grid; grid-template-columns: 88px 1fr 48px; gap: 8px; align-items: center; margin-top: 10px; }
 .bars label { color: var(--muted); font-size: 12px; }
 .bar { height: 18px; border: 1px solid var(--line); border-radius: 5px; background: #061321; overflow: hidden; }

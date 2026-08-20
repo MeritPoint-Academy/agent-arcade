@@ -132,14 +132,20 @@
         <article class="panel experiment">
           <div class="exp-head">
             <h2>Generalization test</h2>
-            <button class="action" id="experimentBtn" type="button">▶ Run fair test</button>
+            <button class="action" id="experimentBtn" type="button">▶ Compute fixed test</button>
+          </div>
+          <div class="exp-method">
+            <b>Deterministic reproducibility check</b>
+            <span><strong>Train:</strong> 240 rows from seed 101 versus 240 rows from 12 fixed seeds.</span>
+            <span><strong>Test:</strong> 600 expert-labeled actions from the same 20 held-out seeds every time.</span>
+            <span><strong>Separate:</strong> the live Human/AI Unseen runs above do not change this benchmark.</span>
           </div>
           <div class="bars">
             <label>1 seed</label><div class="bar one"><i id="barOne"></i></div><output id="outOne">—</output>
             <label>12 seeds</label><div class="bar many"><i id="barMany"></i></div><output id="outMany">—</output>
           </div>
           <div class="receipt" id="experimentReceipt" aria-live="polite">
-            Both agents receive exactly 240 labeled actions. The test set uses 20 level seeds that neither agent has seen.
+            The percentages are calculated in your browser—not stored answers. Because the data and seeded worlds are fixed, recomputing should reproduce the same result.
           </div>
         </article>
       </section>

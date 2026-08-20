@@ -76,6 +76,9 @@ policy that drives the on-screen agent—not simplified pseudocode.
 
 The result is deterministic and computed in the browser. It demonstrates one
 controlled experiment; it is not evidence that level diversity always helps every agent.
+Recomputing uses the same generated training rows and held-out actions, so it intentionally
+returns the same percentages. The interactive Human/AI Unseen runs use the scorebook and
+do not alter this fixed benchmark.
 
 ## Suggested modifications
 

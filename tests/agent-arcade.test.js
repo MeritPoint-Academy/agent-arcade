@@ -65,6 +65,8 @@ test("generalization experiment is controlled and deterministic", () => {
   assert.ok(first.manySeedAccuracy >= 0 && first.manySeedAccuracy <= 1);
   assert.equal(experiment.ONE_SEED.some((seed) => experiment.TEST_SEEDS.includes(seed)), false);
   assert.equal(experiment.MANY_SEEDS.some((seed) => experiment.TEST_SEEDS.includes(seed)), false);
+  assert.equal(first.oneSeedAccuracy, 0.91);
+  assert.equal(Number(first.manySeedAccuracy.toFixed(4)), 0.8433);
 });
 
 test("local run history keeps separate human, agent, and unseen records", () => {
@@ -101,4 +103,17 @@ test("the interface exposes local score comparison and both unseen controllers",
   assert.match(source, /mode === "human"/);
   assert.match(source, /mode === "unseen-human"/);
   assert.match(source, /if \(mode === "human" &&/);
+});
+
+test("the fixed benchmark explains why recomputing and live unseen play are separate", () => {
+  const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
+  const source = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.match(html, /Deterministic reproducibility check/);
+  assert.match(html, /240 rows from seed 101 versus 240 rows from 12 fixed seeds/);
+  assert.match(html, /600 expert-labeled actions from the same 20 held-out seeds every time/);
+  assert.match(html, /live Human\/AI Unseen runs above do not change this benchmark/);
+  assert.match(html, /Compute fixed test/);
+  assert.match(source, /Recompute same test/);
+  assert.match(source, /fixed seeds—not a stored percentage/);
+  assert.match(source, /live Unseen play is separate/);
 });
