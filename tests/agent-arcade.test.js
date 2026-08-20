@@ -5,6 +5,9 @@ const assert = require("node:assert/strict");
 const environment = require("../src/environment");
 const policy = require("../src/policy");
 const experiment = require("../src/experiment");
+const app = require("../src/app");
+const fs = require("node:fs");
+const path = require("node:path");
 
 test("seeded environments reproduce the same trajectory", () => {
   const first = environment.makeWorld(42);
@@ -62,4 +65,40 @@ test("generalization experiment is controlled and deterministic", () => {
   assert.ok(first.manySeedAccuracy >= 0 && first.manySeedAccuracy <= 1);
   assert.equal(experiment.ONE_SEED.some((seed) => experiment.TEST_SEEDS.includes(seed)), false);
   assert.equal(experiment.MANY_SEEDS.some((seed) => experiment.TEST_SEEDS.includes(seed)), false);
+});
+
+test("local run history keeps separate human, agent, and unseen records", () => {
+  let stats = app.emptyRunStats();
+  stats = app.recordRun(stats, "human", 18.5);
+  stats = app.recordRun(stats, "human", 23.25);
+  stats = app.recordRun(stats, "unseenAgent", 31);
+
+  assert.deepEqual(stats.human, { runs: 2, best: 23.25, total: 41.75 });
+  assert.deepEqual(stats.agent, { runs: 0, best: null, total: 0 });
+  assert.deepEqual(stats.unseenHuman, { runs: 0, best: null, total: 0 });
+  assert.deepEqual(stats.unseenAgent, { runs: 1, best: 31, total: 31 });
+});
+
+test("human and AI unseen attempts follow the same held-out seed sequence", () => {
+  let stats = app.emptyRunStats();
+  assert.equal(app.unseenSeedFor(stats, "unseenHuman", experiment.TEST_SEEDS), experiment.TEST_SEEDS[0]);
+  assert.equal(app.unseenSeedFor(stats, "unseenAgent", experiment.TEST_SEEDS), experiment.TEST_SEEDS[0]);
+
+  stats = app.recordRun(stats, "unseenHuman", 12);
+  stats = app.recordRun(stats, "unseenAgent", 17);
+  assert.equal(app.unseenSeedFor(stats, "unseenHuman", experiment.TEST_SEEDS), experiment.TEST_SEEDS[1]);
+  assert.equal(app.unseenSeedFor(stats, "unseenAgent", experiment.TEST_SEEDS), experiment.TEST_SEEDS[1]);
+});
+
+test("the interface exposes local score comparison and both unseen controllers", () => {
+  const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
+  const source = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  assert.match(html, /Run comparison · local only/);
+  assert.match(html, /Human · Unseen/);
+  assert.match(html, /AI · Unseen/);
+  assert.match(html, /same held-out seed sequence/);
+  assert.match(source, /localStorage\.setItem/);
+  assert.match(source, /mode === "human"/);
+  assert.match(source, /mode === "unseen-human"/);
+  assert.match(source, /if \(mode === "human" &&/);
 });

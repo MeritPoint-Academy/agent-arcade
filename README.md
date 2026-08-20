@@ -22,10 +22,13 @@ weighted k-NN Agent。Agent 接管后，学生可以查看四个传感器、动�
    the simulation and demonstration collection freeze together.
 4. **Inspect:** watch sensor values, neighbor-weighted votes, actions, and rewards.
 5. **Generalize:** compare one-seed and twelve-seed policies under the same 240-row budget.
-6. **Extend:** change sensors, `k`, reward rules, level distributions, or the model itself.
+6. **Compare runs:** track completed-run counts, best scores, and averages for Human, AI Takeover, Human Unseen, and AI Unseen. The two unseen modes follow the same held-out seed sequence.
+7. **Extend:** change sensors, `k`, reward rules, level distributions, or the model itself.
 
 No account or server is involved. Demonstrations remain in memory unless the student
-chooses **Export CSV**.
+chooses **Export CSV**. Aggregate run history is stored only in the learner's browser
+and can be cleared independently. Human Unseen actions are evaluation-only and never
+enter the demonstration dataset.
 
 ## Run it
 
